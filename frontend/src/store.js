@@ -71,6 +71,7 @@ export const useStore = create((set, get) => ({
     if (lower.includes('nhiệt độ')) fakeTool = 'set_ac_temperature()';
     if (lower.includes('đèn') && lower.includes('bật')) fakeTool = 'turn_on_lights()';
     if (lower.includes('đèn') && lower.includes('tắt')) fakeTool = 'turn_off_lights()';
+    if (lower.includes('thời tiết') || lower.includes('ai là') || lower.includes('tìm hiểu') || lower.includes('tra cứu')) fakeTool = 'web_search()';
     if (fakeTool) {
        setTimeout(() => get().addMessage({ type: 'tool_info', content: `Calling tool: ${fakeTool}` }), 800);
     }

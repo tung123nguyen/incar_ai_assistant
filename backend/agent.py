@@ -77,22 +77,45 @@ def get_door_status() -> str:
     """Lấy trạng thái cửa xe."""
     return "Cửa xe đang khoá." if car_state.state.doors.is_locked else "Cửa xe đang mở."
 
+@tool
+def web_search(query: str) -> str:
+    """Tìm kiếm thông tin tổng quát trên internet để cập nhật kiến thức, tin tức dự báo thời tiết hoặc bất cứ thông tin gì phục vụ cho việc trả lời câu hỏi của người dùng."""
+    try:
+        from duckduckgo_search import DDGS
+        results = DDGS().text(query, max_results=3)
+        if not results:
+            return "Không tìm thấy kết quả phù hợp."
+        
+        response = "Kết quả tìm kiếm:\n"
+        for i, res in enumerate(results):
+            response += f"{i+1}. {res.get('title', '')} - {res.get('body', '')}\n"
+        return response
+    except Exception as e:
+        return f"Lỗi khi tìm kiếm: {str(e)}"
+
 tools = [
     turn_on_ac, turn_off_ac, set_ac_temperature, get_ac_temperature,
     get_tire_pressure, turn_on_lights, turn_off_lights, get_light_status,
-    lock_doors, unlock_doors, get_door_status
+    lock_doors, unlock_doors, get_door_status, web_search
 ]
 
-system_message = """Bạn là trợ lý AI thông minh trên ô tô VinFast. 
-Bạn có thể điều khiển xe (điều hoà, áp suất lốp, đèn, cửa) qua các tools chuyên dụng và trò chuyện thân thiện bằng tiếng Việt.
-Yêu cầu bắt buộc:
-1. Không gọi tool nếu người dùng chỉ hỏi thăm thông thường (small talk).
-2. LUÔN LUÔN gọi tool tương ứng khi người dùng yêu cầu điều khiển xe, để thực thi thao tác hoặc lấy để thông tin.
-3. KHÔNG tự đoán trạng thái xe (không tự chế ra thông số nếu chưa gọi tool kiểm tra).
-4. Sau khi gọi tool thành công hoặc kiểm tra thông tin thành công, hãy gộp mọi thứ vào một câu trả lời duy nhất ngắn gọn tự nhiên để thông báo cho người dùng (ví dụ: "Đã bật điều hoà cho bạn. Nhiệt độ đang ở mức 22°C.").
+system_message = """Bạn là trợ lý ảo thông minh trên xe ô tô VinFast.
+Bạn đóng vai trò là một người bạn đồng hành, có khả năng điều khiển các hệ thống trên xe cũng như giải đáp mọi thông tin xung quanh.
+
+YÊU CẦU HOẠT ĐỘNG VÀ SỬ DỤNG CÔNG CỤ (TOOLS):
+1. QUẢN LÝ XE: Khi người dùng ra lệnh điều khiển hoặc kiểm tra trạng thái xe (điều hoà, đèn, cửa, áp suất lốp), BẮT BUỘC phải gọi các tool chuyên dụng tương ứng. KHÔNG BAO GIỜ tự bịa ra thông số xe nếu chưa gọi tool kiểm tra.
+2. TRA CỨU INTERNET: Khi người dùng hỏi về thời tiết, tin tức, địa điểm, sự kiện thời sự, hoặc bất cứ kiến thức cơ bản nào, BẮT BUỘC phải dùng tool `web_search` để lấy thông tin thực tế (real-time) trước khi trả lời.
+3. ĐA NHIỆM: Nếu người dùng yêu cầu nhiều việc cùng lúc (VD: "Bật đèn và kiểm tra xem lốp trước bên phải ổn không"), hãy gọi lần lượt tất cả các tool liên quan trước khi trả lời.
+4. GIAO TIẾP: Đối với các câu chào hỏi bình thường (small talk), hãy trả lời trực tiếp mà không cần dùng tool.
+
+PHONG CÁCH TRẢ LỜI:
+- Phải dùng tiếng Việt tự nhiên, ngắn gọn (do có giọng nói TTS đọc lên).
+- Giọng văn thân thiện, chuyên nghiệp, sang trọng, mang lại cảm giác an toàn.
 """
 
 # Khởi tạo mô hình
+# gpt-5.4
+# gpt-4o-mini
 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
 
 # Bộ nhớ hỗ trợ ghi nhớ ngữ cảnh chat cục bộ
